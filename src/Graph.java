@@ -16,7 +16,7 @@ public class Graph {
     /**
      * this table represents a adjazenzlist, where the edges and nodes are stored in
      */
-    private Integer[][] nodeAndEdgeTable;
+    private boolean[][] nodeAndEdgeTable;
     /**
      * if the nodes have names, the information, witch nodes has witch number is stored here
      */
@@ -33,14 +33,19 @@ public class Graph {
     private int nextFreeNode;
 
     /**
+     * counter for the amount of edges
+     */
+    private int edges;
+
+    /**
      * represents a graph, either directed or undirected
      * @param isDirected - if u want to instantiate an undirectedgraph pass false, else pass true
      */
     public Graph(boolean isDirected){
-        nodeAndEdgeTable = new Integer[10][11];
+        nodeAndEdgeTable = new boolean[10][11];
         for (int i = 0;i < nodeAndEdgeTable.length; i++){
             for (int j = 0;j < nodeAndEdgeTable[i].length;j++){
-                nodeAndEdgeTable[i][j] = null;
+                nodeAndEdgeTable[i][j] = false;
             }
         }
         nextFreeNode = 0;
@@ -49,6 +54,7 @@ public class Graph {
         predecessorMap = new HashMap<>();
         distanceMap = new HashMap<>();
         this.isDirected = isDirected;
+        edges = 0;
     }
 
     /**
@@ -56,13 +62,9 @@ public class Graph {
      * should be called everytime, before a search-algorithm is computed with this graph
      */
     public void initSearch() throws InternalErrorException{
-        for (int i = 0;i < nextFreeNode; i++){
-            for (int j = 0;j < nodeAndEdgeTable[i].length;j++){
-                if(nodeAndEdgeTable[i][j] != null && nodeAndEdgeTable[i][j] >= nextFreeNode){
-                    throw new InternalErrorException();
-                }
-            }
-        }
+        colorMap.clear();
+        predecessorMap.clear();
+        distanceMap.clear();
         for(int i = 0;i < nextFreeNode; i++){
             colorMap.put(i,'w');
             predecessorMap.put(i,null);
@@ -114,7 +116,7 @@ public class Graph {
      * getter for the node and edge-table
      * @return, the nodeandedge-table from this graph
      */
-    public Integer[][] getNodeAndEdgeTable(){
+    public boolean[][] getNodeAndEdgeTable(){
         return nodeAndEdgeTable;
     }
 
@@ -154,7 +156,7 @@ public class Graph {
         if(contains(n)){
             int c = 0;
             for (int i = 0;i < nextFreeNode;i++){
-                if(nodeAndEdgeTable[n][i] != null){
+                if(nodeAndEdgeTable[n][i]){
                     c++;
                 }
             }
@@ -181,31 +183,44 @@ public class Graph {
 
     /**
      * adds a node to this graph
+     * @param name, the number of this node
+     */
+    public void addNode(int name){
+        if(nextFreeNode >= nodeAndEdgeTable.length){
+            resize();
+        }
+        nameMap.put(name+"",nextFreeNode);
+        nextFreeNode++;
+    }
+
+    /**
+     * adds a node to this graph
      * @return the number ,the note gets a associated with
      */
     public int addNode(){
         if(nextFreeNode >= nodeAndEdgeTable.length){
             resize();
         }
-        return nextFreeNode++;
+        nextFreeNode++;
+        return nextFreeNode-1;
     }
 
     /**
      * adds a edge to this graph
      * @param nameFrom, the name of the node, where the edge should start
      * @param nameTo, the destination of the edge
-     * @param cost, the cost, if there is a cost for this edge
      * @return true, if the edge was inserted correctly, false otherwise
      */
-    public boolean addEdge(String nameFrom,String nameTo,int cost){
+    public boolean addEdge(String nameFrom,String nameTo){
 
         if(contains(nameFrom) && contains(nameTo)){
             int i = nameMap.get(nameFrom);
             int j = nameMap.get(nameTo);
             if(!isDirected){
-                nodeAndEdgeTable[j][i] = new Integer(cost);
+                nodeAndEdgeTable[j][i] = true;
             }
-            nodeAndEdgeTable[i][j] = new Integer(cost);
+            nodeAndEdgeTable[i][j] = true;
+            edges++;
             return true;
         }
         return false;
@@ -215,15 +230,15 @@ public class Graph {
      * adds a edge to this graph
      * @param from, the number of the node, where the edge should start
      * @param to, the destination of the edge
-     * @param cost, the cost, if there is a cost for this edge
      * @return true, if the edge was inserted correctly, false otherwise
      */
-    public boolean addEdge(int from,int to,int cost){
+    public boolean addEdge(int from,int to){
         if(from < nextFreeNode && to < nextFreeNode && from >= 0 && to >= 0){
             if(!isDirected){
-                nodeAndEdgeTable[to][from] = cost;
+                nodeAndEdgeTable[to][from] = true;
             }
-            nodeAndEdgeTable[from][to] = cost;
+            nodeAndEdgeTable[from][to] = true;
+            edges++;
             return true;
         }
         return false;
@@ -237,7 +252,7 @@ public class Graph {
      */
     public boolean hasEdge(int i, int j){
         if(i >= 0 && i < nextFreeNode && j >= 0 && j < nextFreeNode){
-            if(nodeAndEdgeTable[i][j] != null){
+            if(nodeAndEdgeTable[i][j]){
                 return true;
             }
         }
@@ -268,10 +283,42 @@ public class Graph {
     }
 
     /**
+     * this method creates an array, which contains all edges, which this graph is containing
+     * @return an array with all edges from this graph
+     */
+    public Tupel<Integer,Integer>[] edgesToArray(){
+        Tupel<Integer,Integer>[] array = new Tupel[edges];
+        int k = 0;
+        for (int i = 0;i < nextFreeNode;i++){
+            for (int j = 0;j < nextFreeNode;j++){
+                if(nodeAndEdgeTable[i][j]){
+                    array[k] = new Tupel<Integer,Integer>(i,j);
+                }
+            }
+        }
+        return array;
+    }
+
+    public String toString(){
+        String o = "Graph=(\nV={0,...,"+nextFreeNode+"},\nE={";
+        for (int i = 0; i < nextFreeNode;i++){
+            o += "Node_"+i+"\n{";
+            for (int j = 0;j < nodeAndEdgeTable[i].length;j++){
+                if(nodeAndEdgeTable[i][j]){
+                    o += "("+i+","+j+")\n";
+                }
+            }
+            o += "}\n";
+        }
+        o += ")";
+        return o;
+    }
+
+    /**
      * resizes the nodeAndEdge-table
      */
     private void resize(){
-        Integer[][] newArr = new Integer[nodeAndEdgeTable.length+10][nodeAndEdgeTable.length+1+10];
+        boolean[][] newArr = new boolean[nodeAndEdgeTable.length+10][nodeAndEdgeTable.length+1+10];
         for (int i = 0; i < nodeAndEdgeTable.length;i++){
             newArr[i] = nodeAndEdgeTable[i];
         }
