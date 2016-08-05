@@ -4,6 +4,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by PhilippKroll on 04.08.2016.
@@ -159,6 +160,8 @@ public class GraphCalculator {
         } catch (InternalErrorException e){
             return false;
         }
+        Random r = new Random();
+        breathFirstSearch(g,r.nextInt(g.size()-1));
         for (int i = 0;i < g.size();i++){
             if(g.getColor(i) == 'w'){
                 return false;
@@ -173,15 +176,14 @@ public class GraphCalculator {
      * @return a new integer array, which contains the nodes, sorted by their timestamps
      */
     public int[] topologicalSort(Graph g){
-        deepthFirstSearch(g);
+        depthFirstSearch(g);
         int[] nodes = new int[g.size()];
         int[] times = new int[g.size()];
         for (int i = 0; i < g.size();i++){
             nodes[i] = i;
             times[i] = g.getTime(i);
         }
-        System.out.println("Das sortieren ist noch nicht implementiert");
-        mergeSort(nodes,times,0,0,0);
+        mergeSort(nodes,times,0,nodes.length-1);
         return nodes;
     }
 
@@ -190,8 +192,13 @@ public class GraphCalculator {
      * @param n
      * @param t
      */
-    private void mergeSort(int[] n, int[] t,int p, int q, int r){
-
+    private void mergeSort(int[] n, int[] t,int p, int r){
+        if(p < r){
+            int q = (p+r)/2;
+            mergeSort(n,t,p,q);
+            mergeSort(n,t,q+1,r);
+            merge(n,t,p,q,r);
+        }
     }
 
     /**
@@ -202,7 +209,44 @@ public class GraphCalculator {
      * @param q
      */
     private void merge(int[]n,int[]t,int p,int q,int r){
-
+        int n1 = q-p+1;
+        int n2 = r - q;
+        int[] leN = new int[n1];
+        int[] leT = new int[n1];
+        int[] riN = new int[n2];
+        int[] riT = new int[n2];
+        int i = 0,j = 0;
+        while(i < n1 && j < n2){
+            leN[i] = n[p+i-1];
+            leT[i] = t[i+p-1];
+            riN[j] = n[q+j];
+            riT[j] = t[q+j];
+            i++;
+            j++;
+        }
+        while(i < n1){
+            leN[i] = n[p+i-1];
+            leT[i] = t[i+p-1];
+            i++;
+        }
+        while(j < n2){
+            riN[j] = n[q+j];
+            riT[j] = t[q+j];
+            j++;
+        }
+        i = 0;
+        j = 0;
+        for(int k = p;k < r;k++){
+            if(leT[i] < riT[j]){
+                n[k] = leN[i];
+                t[k] = leT[i];
+                i++;
+            } else {
+                n[k] = riN[j];
+                t[k] = riT[j];
+                j++;
+            }
+        }
     }
 
     /**
@@ -224,32 +268,31 @@ public class GraphCalculator {
             return false;
         }
         LinkedList<Integer> queue = new LinkedList<>();
+        g.setStartNode(s);
+        g.setDistance(s,0);
+        g.setColor(s,'g');
         queue.add(s);
         while(queue.size() != 0){
             int u = queue.poll();
-            if(u < g.size()){
-                for (int i = 0;i < nodeAndEdgeTable[u].length;i++){
-                    if(g.getNodeAndEdgeTable()[u][i] && g.getColor(i) == 'w') {
-                        g.setColor(i,'w');
-                        g.setPredecessor(i,u);
-                        g.setDistance(i,g.getDistance(u)+1);
-                        queue.add(i);
-                    }
+            for (int i = 0;i < nodeAndEdgeTable[u].length;i++){
+                if(g.getNodeAndEdgeTable()[u][i] && g.getColor(i) == 'w') {
+                    g.setColor(i,'g');
+                    g.setPredecessor(i,u);
+                    g.setDistance(i,g.getDistance(u)+1);
+                    queue.add(i);
                 }
-                g.setColor(u,'b');
-            } else {
-                return false;
             }
+            g.setColor(u,'b');
         }
         return true;
     }
 
     /**
-     * starts a deepth-first-search in the given graph, the generated values for time, predecessor and color are accessable throught the getters in the given graph g, after the computation terminates
+     * starts a depth-first-search in the given graph, the generated values for time, predecessor and color are accessable throught the getters in the given graph g, after the computation terminates
      * @param g, the graph
      * @return true, if the search terminates correctly, false otherwise
      */
-    public boolean deepthFirstSearch(Graph g){
+    public boolean depthFirstSearch(Graph g){
         try {
             g.initSearch();
         } catch (InternalErrorException e){
@@ -259,25 +302,25 @@ public class GraphCalculator {
         TimeStamp time = new TimeStamp();
         for (int i = 0; i < k; i++){
             if(g.getColor(i) == 'w'){
-                deepthFirstSearchVisit(g,i,time);
+                depthFirstSearchVisit(g,i,time);
             }
         }
         return true;
     }
 
     /**
-     * private method for deepth-first-search. the method visits a node and traverses further on in this graph
+     * private method for depth-first-search. the method visits a node and traverses further on in this graph
      * @param g, the graph
      * @param node, the node, which is visited
      */
-    private void deepthFirstSearchVisit(Graph g,int node, TimeStamp time){
+    private void depthFirstSearchVisit(Graph g,int node, TimeStamp time){
         time.incr();
         g.setTime(node,time.time);
         g.setColor(node,'g');
         for (int i = 0;i < g.getNodeAndEdgeTable()[node].length;i++) {
             if (g.getNodeAndEdgeTable()[node][i] && g.getColor(i) == 'w') {
                 g.setPredecessor(i, node);
-                deepthFirstSearchVisit(g, i, time);
+                depthFirstSearchVisit(g, i, time);
             }
         }
         g.setColor(node,'b');
@@ -354,7 +397,7 @@ public class GraphCalculator {
     }
 
     /**
-     * helps to pass a "time" as apointer to a deepth-first-search
+     * helps to pass a "time" as apointer to a depth-first-search
      */
     private class TimeStamp{
         public int time = 0;
