@@ -1,13 +1,13 @@
 import exceptions.InternalErrorException;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * Created by PhilippKroll on 03.08.2016.
+ * this class represents either a directed or undirected graph. it provides basic methods to manipulate the graph itselve
+ * and contains variables to save information, which may be computed while graph traversing algorithms
  */
-public class Graph {
+public class Graph extends Observable {
 
     /**
      * shows, wether the graph is directed ur undirected
@@ -20,13 +20,23 @@ public class Graph {
     /**
      * if the nodes have names, the information, witch nodes has witch number is stored here
      */
-    private HashMap<String,Integer> nameMap;
+    private HashMap<Integer,String> nameMap;
     /**
-     * colormap, in case there is a deepth- oder breadth-first search
+     * colormap, in case there is a depth- oder breadth-first search
      */
     private HashMap<Integer,Character> colorMap;
+    /**
+     *predecessormap, helps out in case of a bsf or dsf
+     */
     private HashMap<Integer,Integer> predecessorMap;
+    /**
+     *distancemap, helps out in case of a bsf or dsf
+     */
     private HashMap<Integer,Integer> distanceMap;
+    /**
+     *variable to determine the node, where the traverse started, helps out in case of a bsf or dsf
+     */
+    private Integer startNode;
     /**
      * indicates the end of the nodeandedge-table
      */
@@ -42,7 +52,7 @@ public class Graph {
      * @param isDirected - if u want to instantiate an undirectedgraph pass false, else pass true
      */
     public Graph(boolean isDirected){
-        nodeAndEdgeTable = new boolean[10][11];
+        nodeAndEdgeTable = new boolean[10][10];
         for (int i = 0;i < nodeAndEdgeTable.length; i++){
             for (int j = 0;j < nodeAndEdgeTable[i].length;j++){
                 nodeAndEdgeTable[i][j] = false;
@@ -54,14 +64,16 @@ public class Graph {
         predecessorMap = new HashMap<>();
         distanceMap = new HashMap<>();
         this.isDirected = isDirected;
+        startNode = null;
         edges = 0;
     }
 
     /**
-     * inits a deepth- oder breath-first-search
+     * inits a depth- oder breath-first-search
      * should be called everytime, before a search-algorithm is computed with this graph
      */
     public void initSearch() throws InternalErrorException{
+        startNode = null;
         colorMap.clear();
         predecessorMap.clear();
         distanceMap.clear();
@@ -72,36 +84,289 @@ public class Graph {
         }
     }
 
+    /**
+     * getter for a "helping-variable" for bfs/dfs
+     * @return null or a number / name, which the graph contains
+     */
+    public Integer getStartNode(){
+        return startNode;
+    }
+
+    /**
+     * sets this variable
+     * @param s, a number this graph contains
+     */
+    public void setStartNode(Object s){
+        if(s instanceof Integer){
+            if((Integer)s >= 0 && (Integer)s < nextFreeNode)
+                startNode = (Integer)s;
+        }
+        if(s instanceof String){
+            for (int i = 0;i < nextFreeNode;i++){
+                if(nameMap.get(i).equals((String)s)){
+                    startNode = i;
+                }
+            }
+        }
+    }
+
+    /**
+     * auxiliary variable setter, sets the color of a specific node.
+     * this method is used for bfs/dfs algorithms
+     * @param i
+     * @param c
+     */
     public void setColor(int i, char c){
         colorMap.put(i,c);
     }
 
+    /**
+     * auxiliary variable getter, returns the color of a node
+     * this method is used for bfs/dfs algorithms
+     * @param i
+     * @return
+     */
     public char getColor(int i){
         return colorMap.get(i);
     }
 
+    /**
+     * auxiliary variable setter, sets the predecessor of a specific node
+     * this method is used for bfs/dfs algorithms
+     * @param i
+     * @param j
+     */
     public void setPredecessor(int i,int j){
         predecessorMap.put(i,j);
     }
 
+    /**
+     * auxiliary variable setter, represents a timestamp, which is used to determine, at witch point of time a node was found in a dfs-algorithm
+     * this method is used for dfs algorithms
+     * @param i
+     * @param t
+     */
     public void setTime(int i,int t){
         distanceMap.put(i,t);
     }
 
+    /**
+     * auxiliary variable getter, timestamp
+     * this method is used for dfs algorithms
+     * @param i
+     * @return
+     */
     public int getTime(int i){
         return distanceMap.get(i);
     }
 
+    /**
+     * auxiliary variable getter, returns a,in a dfs/bfs search computed, predecessor of the node i
+     * this method is used for bfs/dfs algorithms
+     * @param i
+     * @return
+     */
     public int getPredecessor(int i){
         return predecessorMap.get(i);
     }
 
+    /**
+     * auxiliary variable setter
+     * this method is used for bfs algorithms
+     * @param i
+     * @param d
+     */
     public void setDistance(int i, int d){
         distanceMap.put(i,d);
     }
 
+    /**
+     * auxiliary variable getter
+     * this method is used for bfs algorithms
+     * @param i
+     * @return
+     */
     public int getDistance(int i){
         return distanceMap.get(i);
+    }
+
+    public String showBreathFirstSearchInfo(){
+        String o = "+------------------------------------------------------------------------+\n";
+        o +=       "|Information: breath-first-search                                        |\n";
+        o +=       "+--------------------+--------------------+----------------+-------------+\n";
+        o +=       "|        node        |     predecessor    |    distance    |    color    |\n";
+        o +=       "+--------------------+--------------------+----------------+-------------+\n";
+        /*75 chars*, 20 node, 20 predecessor, 16 distance, 13 color*/
+        for (int i = 0;i < nextFreeNode; i++){
+            String name = nameMap.get(i);
+            if(name.length() >= 19){
+                if(i == startNode){
+                    name = name.substring(0,18);
+                    name += ".*";
+                } else {
+                    name = name.substring(0,19);
+                    name += ".";
+                }
+            }
+            if(i == startNode){
+                name += "*";
+            }
+            o +=   "|"+name;
+            for (int j = 0;j < 20-name.length();j++){
+                o += " ";
+            }
+            o += "|";
+            String pred = nameMap.get(predecessorMap.get(i));
+            if(pred == null){
+                pred = "null";
+            } else {
+                if(pred.length() >= 20){
+                    pred = pred.substring(0,20);
+                }
+            }
+            o +=   pred;
+            for (int j = 0;j < 20-pred.length();j++){
+                o += " ";
+            }
+            o += "|";
+            o +=   distanceMap.get(i);
+            for (int j = 0;j < 16-(distanceMap.get(i)+"").length();j++){
+                o += " ";
+            }
+            o += "|";
+            o +=   colorMap.get(i);
+            for (int j = 0;j < 13-(colorMap.get(i)+"").length();j++){
+                o += " ";
+            }
+            o += "|\n";
+            o += "+--------------------+--------------------+----------------+-------------+\n";
+        }
+        return o;
+    }
+
+    public String showDepthFirstSearchInfo(){
+        String o = "+------------------------------------------------------------------------+\n";
+        o +=       "|Information: depth-first-search                                         |\n";
+        o +=       "+--------------------+--------------------+----------------+-------------+\n";
+        o +=       "|        node        |     predecessor    |      time      |    color    |\n";
+        o +=       "+--------------------+--------------------+----------------+-------------+\n";
+        /*75 chars*, 20 node, 20 predecessor, 16 distance, 13 color*/
+        for (int i = 0;i < nextFreeNode; i++){
+            String name = nameMap.get(i);
+            if(name.length() >= 19){
+                if(i == startNode){
+                    name = name.substring(0,18);
+                    name += ".*";
+                } else {
+                    name = name.substring(0,19);
+                    name += ".";
+                }
+            }
+            o +=   "|"+name;
+            for (int j = 0;j < 20-name.length();j++){
+                o += " ";
+            }
+            o += "|";
+            String pred = nameMap.get(predecessorMap.get(i));
+            if(pred == null){
+                pred = "null";
+            } else {
+                if(pred.length() >= 20){
+                    pred = pred.substring(0,20);
+                }
+            }
+            o +=   pred;
+            for (int j = 0;j < 20-pred.length();j++){
+                o += " ";
+            }
+            o += "|";
+            o +=  getTime(i);
+            for (int j = 0;j < 16-(getTime(i)+"").length();j++){
+                o += " ";
+            }
+            o += "|";
+            o +=   colorMap.get(i);
+            for (int j = 0;j < 13-(colorMap.get(i)+"").length();j++){
+                o += " ";
+            }
+            o += "|\n";
+            o += "+--------------------+--------------------+----------------+-------------+\n";
+        }
+        return o;
+    }
+
+    /**
+     * removes a edge from this graph
+     * @param from, source of the edge
+     * @param to, destination of the edge
+     * @return true, if the edge was removed, false otherwise
+     */
+    private boolean removeEdgePriv(int from,int to){
+        if(from < 0 || to >= nextFreeNode ||to < 0 || to >= nextFreeNode){
+            return false;
+        }
+        if(nodeAndEdgeTable[from][to]){
+            nodeAndEdgeTable[from][to] = false;
+            if(!isDirected){
+                nodeAndEdgeTable[to][from] = false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * removes a edge from this graph, if from or to are no instances of integer or string, the method has no effect on this graph
+     * @param from, source of the edge
+     * @param to, destination of the edge
+     * @return true, if the edge was removed, false otherwise
+     */
+    public boolean removeEdge(Object from, Object to){
+        if(from instanceof Integer && to instanceof Integer){
+            return removeEdgePriv((Integer)from,(Integer)to);
+        }
+        if(from instanceof String && to instanceof  String){
+            int f = -1;
+            int t = -1;
+            for (int i = 0;i < nextFreeNode; i++){
+                String name = nameMap.get(i);
+                if(f != -1 && t != -1){
+                    break;
+                }
+                if(name != null){
+                    if(name.equals((String)from)){
+                        f = i;
+                    }
+                    if(name.equals((String)to)){
+                        t = i;
+                    }
+                }
+            }
+            if(f < 0 || t < 0){
+                return false;
+            }
+            return removeEdgePriv(f,t);
+        }
+        if(from instanceof String && to instanceof Integer){
+            for (int i = 0;i <nextFreeNode;i++){
+                String name = nameMap.get(i);
+                if(name != null){
+                    if(name.equals(from)){
+                        return removeEdgePriv(i,((Integer) to).intValue());
+                    }
+                }
+            }
+        }
+        if(from instanceof Integer && to instanceof String){
+            for (int i = 0;i <nextFreeNode;i++){
+                String name = nameMap.get(i);
+                if(name != null){
+                    if(name.equals(from)){
+                        return removeEdgePriv(((Integer) from).intValue(),i);
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -109,7 +374,7 @@ public class Graph {
      * @return
      */
     public int size(){
-        return nextFreeNode - 1;
+        return nextFreeNode;
     }
 
     /**
@@ -121,30 +386,11 @@ public class Graph {
     }
 
     /**
-     * returns the number of the node, named with "name"
-     * @param name, the name of the node
-     * @return the number of the node with the name "name"
-     */
-    public int getName(String name){
-        return nameMap.get(name);
-    }
-
-    /**
      * getter for the "mode" of this graph
      * @return true, if the graph is directed, false otherwise
      */
     public boolean isDirectedGrpah(){
         return isDirected;
-    }
-
-    /**
-     * computes the grade of a single node
-     * @param name - the nodes name
-     * @return - the grade of the node with name "name"
-     */
-    public int grade(String name){
-        int n = nameMap.get(name);
-        return grade(n);
     }
 
     /**
@@ -177,8 +423,11 @@ public class Graph {
             addNode();
             return;
         }
-        nameMap.put(name,nextFreeNode);
+        nameMap.put(nextFreeNode,name);
         nextFreeNode++;
+        if(super.countObservers() > 0){
+            super.notifyObservers("new node");
+        }
     }
 
     /**
@@ -189,8 +438,11 @@ public class Graph {
         if(nextFreeNode >= nodeAndEdgeTable.length){
             resize();
         }
-        nameMap.put(name+"",nextFreeNode);
+        nameMap.put(nextFreeNode,name+"");
         nextFreeNode++;
+        if(super.countObservers() > 0){
+            super.notifyObservers("new node");
+        }
     }
 
     /**
@@ -201,29 +453,12 @@ public class Graph {
         if(nextFreeNode >= nodeAndEdgeTable.length){
             resize();
         }
+        nameMap.put(nextFreeNode,nextFreeNode+"");
         nextFreeNode++;
-        return nextFreeNode-1;
-    }
-
-    /**
-     * adds a edge to this graph
-     * @param nameFrom, the name of the node, where the edge should start
-     * @param nameTo, the destination of the edge
-     * @return true, if the edge was inserted correctly, false otherwise
-     */
-    public boolean addEdge(String nameFrom,String nameTo){
-
-        if(contains(nameFrom) && contains(nameTo)){
-            int i = nameMap.get(nameFrom);
-            int j = nameMap.get(nameTo);
-            if(!isDirected){
-                nodeAndEdgeTable[j][i] = true;
-            }
-            nodeAndEdgeTable[i][j] = true;
-            edges++;
-            return true;
+        if(super.countObservers() > 0){
+            super.notifyObservers("new node");
         }
-        return false;
+        return nextFreeNode-1;
     }
 
     /**
@@ -239,6 +474,9 @@ public class Graph {
             }
             nodeAndEdgeTable[from][to] = true;
             edges++;
+            if(super.countObservers() > 0){
+                super.notifyObservers("new edge");
+            }
             return true;
         }
         return false;
@@ -299,18 +537,69 @@ public class Graph {
         return array;
     }
 
+    /**
+     * this method creates a string, representing this graph
+     * @return a string with all information, this graph contains
+     */
     public String toString(){
-        String o = "Graph=(\nV={0,...,"+nextFreeNode+"},\nE={";
-        for (int i = 0; i < nextFreeNode;i++){
-            o += "Node_"+i+"\n{";
-            for (int j = 0;j < nodeAndEdgeTable[i].length;j++){
-                if(nodeAndEdgeTable[i][j]){
-                    o += "("+i+","+j+")\n";
+        String o = "";
+        if(isDirectedGrpah()){
+            o += "Directed ";
+        } else {
+            o += "Undirected ";
+        }
+        o += "Graph=(";
+        if(nameMap.size() == 0){
+            o += "V={0,...,"+nextFreeNode+"},\nE={";
+        } else {
+            o += "V={";
+            for (int i = 0;i < nextFreeNode; i++){
+                String name = nameMap.get(i);
+                if(name != null){
+                    o += "\""+name+"\""+"/"+i;
+                } else {
+                    o += i;
+                }
+                if(i < nextFreeNode-1){
+                    o += ",";
                 }
             }
-            o += "}\n";
+            o += "},\nE={";
         }
-        o += ")";
+        for (int i = 0; i < nextFreeNode;i++){
+            if(nameMap.get(i) != null){
+                o += "\t\""+nameMap.get(i)+"\"/"+i+"{";
+            } else {
+                o += "\tNode_"+i+"{";
+            }
+            for (int j = 0;j < nodeAndEdgeTable[i].length;j++){
+                if(nodeAndEdgeTable[i][j]){
+                    o += "(";
+                    if(nameMap.get(i) != null){
+                        o += nameMap.get(i);
+                    } else {
+                        o += i;
+                    }
+                    o += ",";
+                    if(nameMap.get(j) != null) {
+                        o += nameMap.get(j);
+                    } else {
+                        o += j;
+                    }
+                    o += ")";
+                    if(j < nextFreeNode){
+                        o += ",";
+                    }
+                }
+            }
+            o = o.substring(0,o.length()-1);
+            if(i >= nextFreeNode-1){
+                o += "}";
+            } else {
+                o += "},\n";
+            }
+        }
+        o += ")\n";
         return o;
     }
 
@@ -318,7 +607,7 @@ public class Graph {
      * resizes the nodeAndEdge-table
      */
     private void resize(){
-        boolean[][] newArr = new boolean[nodeAndEdgeTable.length+10][nodeAndEdgeTable.length+1+10];
+        boolean[][] newArr = new boolean[nodeAndEdgeTable.length+10][nodeAndEdgeTable.length+10];
         for (int i = 0; i < nodeAndEdgeTable.length;i++){
             newArr[i] = nodeAndEdgeTable[i];
         }
