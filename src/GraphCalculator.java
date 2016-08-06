@@ -80,6 +80,23 @@ public class GraphCalculator {
     }
 
     /**
+     * method checks, if the two "sets" equal
+     * @param U
+     * @param V
+     * @return true, if U and V contain the same elements
+     */
+    private boolean equals(LinkedList<Integer> U, LinkedList<Integer> V){
+        for (int u:U) {
+            for (int v:V) {
+                if(u != v){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * unites the two linkedlists to one new list, the two arguments are not changed. a new linkedlist, containing all the elements from both lists, is returned
      * @param set_1
      * @param set_2
@@ -367,15 +384,22 @@ public class GraphCalculator {
         for (int i = 0;i < size; i++){
             list.clear();
             list.add(i);
-            int m = i;
-            while(list.size() != k){
-                if(m != i){
-                    list.add(m%size);
+            int m = 0;
+            int n = 0;
+            while(m < size){
+                while(list.size() != k){
+                    if(n != i){
+                        list.add((m+n)%size);
+                        n++;
+                    } else {
+                        n++;
+                    }
                 }
-                m++;
-            }
-            if(clique(list,g)){
-                return true;
+                if(clique(list,g)){
+                    return true;
+                } else {
+                    m++;
+                }
             }
         }
         list.clear();
@@ -384,11 +408,50 @@ public class GraphCalculator {
 
     /**
      * returns the maximum sized clique from this graph, this method dont changes any of the graphs attributes and returns a new integer list, which contains the numbers of the nodes
+     * this method runs through nearly all permutations of nodes! this is very slow.
      * @param g, the graph
-     * @return, the clique with maximal size, contains by graph g
+     * @return, the cliques with maximal size, which g contains
      */
-    public LinkedList<Integer> cliqueO(Graph g){
-        return null;
+    public LinkedList<LinkedList<Integer>> cliqueO(Graph g){
+        /*find out the size of the maximum sized clique with kclique, then look for a clique with size k - problem: i want all kcliques, otherwise there is the posibility, that the graph contians more then one
+        * kcliques -> a single use of cliqueO returns the first k-clique it finds */
+        int k = 1;
+        /*look for the maximum size a clique has in g*/
+        int i = g.size();
+        while(i > 0){
+            if(kClique(g,i)){
+                k = i;
+                break;
+            }
+        }
+        /*now test all possible candidates to find all cliques of size k*/
+        LinkedList<LinkedList<Integer>> c = new LinkedList<>();
+        i = 0;
+        while(i < g.size()){
+            LinkedList<Integer> list = new LinkedList<>();
+            int m = 0;
+            int n = 0;
+            while(m < g.size()){
+                while(list.size() != k){
+                    if(n != i){
+                        list.add((m+n)%g.size());
+                        n++;
+                    } else {
+                        n++;
+                    }
+                }
+                if(clique(list,g)){
+                    for (LinkedList<Integer> l: c) {
+                        if(!equals(l,list)){
+                            c.add(list);
+                        }
+                    }
+                } else {
+                    m++;
+                }
+            }
+        }
+        return c;
     }
 
     /**
