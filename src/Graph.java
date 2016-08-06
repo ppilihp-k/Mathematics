@@ -1,5 +1,6 @@
 import exceptions.InternalErrorException;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -7,7 +8,7 @@ import java.util.*;
  * this class represents either a directed or undirected graph. it provides basic methods to manipulate the graph itselve
  * and contains variables to save information, which may be computed while graph traversing algorithms
  */
-public class Graph extends Observable {
+public class Graph extends Observable implements Serializable {
 
     /**
      * shows, wether the graph is directed ur undirected
@@ -467,7 +468,7 @@ public class Graph extends Observable {
      * @param to, the destination of the edge
      * @return true, if the edge was inserted correctly, false otherwise
      */
-    public boolean addEdge(int from,int to){
+    public boolean addEdgePriv(int from,int to){
         if(from < nextFreeNode && to < nextFreeNode && from >= 0 && to >= 0){
             if(!isDirected){
                 nodeAndEdgeTable[to][from] = true;
@@ -478,6 +479,45 @@ public class Graph extends Observable {
                 super.notifyObservers("new edge");
             }
             return true;
+        }
+        return false;
+    }
+
+    public boolean addEdge(Object from, Object to){
+        if(from instanceof Integer && to instanceof Integer){
+            return addEdgePriv((Integer)from,(Integer)to);
+        }
+        if(from instanceof String && to instanceof Integer){
+            for (int i = 0; i < nextFreeNode; i++){
+                String name = nameMap.get(i);
+                if(name != null && name.equals(from)){
+                    return addEdgePriv(i,(Integer)to);
+                }
+            }
+        }
+        if(from instanceof Integer && to instanceof String){
+            for (int i = 0; i < nextFreeNode; i++){
+                String name = nameMap.get(i);
+                if(name != null && name.equals(from)){
+                    return addEdgePriv((Integer)from,i);
+                }
+            }
+        }
+        if(from instanceof String && to instanceof String){
+            int f = -1;
+            int t = -1;
+            for (int i = 0; i < nextFreeNode; i++){
+                String name = nameMap.get(i);
+                if(name != null && name.equals(from)){
+                   f = i;
+                }
+                if(name != null && name.equals(to)){
+                    t = i;
+                }
+                if(f != -1 && t != -1){
+                    return addEdgePriv(f,t);
+                }
+            }
         }
         return false;
     }
