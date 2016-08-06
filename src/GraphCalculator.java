@@ -173,7 +173,7 @@ public class GraphCalculator {
     /**
      * sorts the nodes by their timestamps
      * @param g, the graph, which should be sorted topologically. the graph itselfe is not changed
-     * @return a new integer array, which contains the nodes, sorted by their timestamps
+     * @return a new integer array, which contains the nodes, sorted ascending by their timestamps
      */
     public int[] topologicalSort(Graph g){
         depthFirstSearch(g);
@@ -183,21 +183,21 @@ public class GraphCalculator {
             nodes[i] = i;
             times[i] = g.getTime(i);
         }
-        mergeSort(nodes,times,0,nodes.length-1);
+        mergeSort(nodes,times,0,nodes.length);
         return nodes;
     }
 
     /**
-     * implements merge-sort
+     * implements merge-sort, the initial call to this method is lo = 0, hi = array.length !!
      * @param n
      * @param t
      */
-    private void mergeSort(int[] n, int[] t,int p, int r){
-        if(p < r){
-            int q = (p+r)/2;
-            mergeSort(n,t,p,q);
-            mergeSort(n,t,q+1,r);
-            merge(n,t,p,q,r);
+    private void mergeSort(int[] n, int[] t,int lo, int hi){
+        if(lo < hi){
+            int mi = (lo+hi)/2;
+            mergeSort(n,t,lo,mi);
+            mergeSort(n,t,mi+1,hi);
+            merge(n,t,lo,mi,hi);
         }
     }
 
@@ -205,39 +205,33 @@ public class GraphCalculator {
      * merges the arrays in the right order
      * @param n
      * @param t
-     * @param p
-     * @param q
+     * @param lo, lowest index of the unsorted subarray
+     * @param mi, mid index of the unsorted subarray
+     * @param hi, highest index of the unsorted subarray
      */
-    private void merge(int[]n,int[]t,int p,int q,int r){
-        int n1 = q-p+1;
-        int n2 = r - q;
+    private void merge(int[]n,int[]t,int lo,int mi,int hi){
+        int n1 = mi - lo;
+        int n2 = hi - mi;
         int[] leN = new int[n1];
         int[] leT = new int[n1];
         int[] riN = new int[n2];
         int[] riT = new int[n2];
         int i = 0,j = 0;
-        while(i < n1 && j < n2){
-            leN[i] = n[p+i-1];
-            leT[i] = t[i+p-1];
-            riN[j] = n[q+j];
-            riT[j] = t[q+j];
-            i++;
-            j++;
-        }
         while(i < n1){
-            leN[i] = n[p+i-1];
-            leT[i] = t[i+p-1];
+            leN[i] = n[lo+i];
+            leT[i] = t[lo+i];
             i++;
         }
         while(j < n2){
-            riN[j] = n[q+j];
-            riT[j] = t[q+j];
+            riN[j] = n[mi+j];
+            riT[j] = t[mi+j];
             j++;
         }
         i = 0;
         j = 0;
-        for(int k = p;k < r;k++){
-            if(leT[i] < riT[j]){
+        int k = lo;
+        while(k <= hi && i < n1 && j < n2){
+            if(leT[i] <= riT[j]){
                 n[k] = leN[i];
                 t[k] = leT[i];
                 i++;
@@ -246,6 +240,19 @@ public class GraphCalculator {
                 t[k] = riT[j];
                 j++;
             }
+            k++;
+        }
+        while(i < n1){
+            n[k] = leN[i];
+            t[k] = leT[i];
+            i++;
+            k++;
+        }
+        while(j < n2){
+            n[k] = riN[j];
+            t[k] = riT[j];
+            j++;
+            k++;
         }
     }
 
@@ -351,28 +358,28 @@ public class GraphCalculator {
      * @param k, the size of the clique
      * @return true, if the graph g contains a clique of the size k
      */
-    public List<Integer> kClique(Graph g,int k){
+    public boolean kClique(Graph g,int k){
         int size = g.size();
         if(k > size){
-            return null;
+            return false;
         }
-        List<Integer> list = new LinkedList<>();
+        LinkedList<Integer> list = new LinkedList<>();
         for (int i = 0;i < size; i++){
             list.clear();
             list.add(i);
-            for(int m = 0;m < size-1-k;m++){
-                while(list.size() != k){
-                    if(m != i){
-                        list.add(m);
-                    }
+            int m = i;
+            while(list.size() != k){
+                if(m != i){
+                    list.add(m%size);
                 }
-                if(clique(list,g)){
-                    return list;
-                }
+                m++;
+            }
+            if(clique(list,g)){
+                return true;
             }
         }
         list.clear();
-        return list;
+        return false;
     }
 
     /**
@@ -380,20 +387,8 @@ public class GraphCalculator {
      * @param g, the graph
      * @return, the clique with maximal size, contains by graph g
      */
-    public List<Integer> cliqueO(Graph g){
-        int i = g.size();
-        List<Integer> list = null;
-        while(i > 0){
-            list = kClique(g,i);
-            if(list != null){
-                return list;
-            }
-         }
-         if(list != null){
-             list.clear();
-             return list;
-         }
-         return new LinkedList<Integer>();
+    public LinkedList<Integer> cliqueO(Graph g){
+        return null;
     }
 
     /**
