@@ -8,6 +8,7 @@ import java.util.Random;
 
 /**
  * Created by PhilippKroll on 04.08.2016.
+ * the graphcalculator provides some basic methods which work on graphs like breath/depth-first-search, compute minimal spanningtrees and some methods to solve clique problems
  */
 public class GraphCalculator {
 
