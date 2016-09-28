@@ -1,6 +1,5 @@
 package differentialCalculus.pseudocontrol;
 
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 
 /**
  * Created by PhilippKroll on 06.08.2016.

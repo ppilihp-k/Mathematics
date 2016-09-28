@@ -1,6 +1,9 @@
-import exceptions.InternalErrorException;
+package graph;
 
-import java.awt.*;
+import exceptions.InternalErrorException;
+import graph.model.Graph;
+import utils.Tupel;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -282,7 +285,7 @@ public class GraphCalculator {
      * @param s, the starting node
      * @return true, if the search terminates correctly, false, if g dont contains s or a other error occured
      */
-    public boolean breathFirstSearch(Graph g,int s){
+    public boolean breathFirstSearch(Graph g, int s){
         if(!g.contains(s)){
             return false;
         }

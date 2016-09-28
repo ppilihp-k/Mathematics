@@ -1,3 +1,4 @@
+package geometricCalculus.model;
 
 public class Segment {
 

@@ -1,6 +1,5 @@
+package geometricCalculus.model;
 
-
-import java.nio.ByteBuffer;
 import java.util.Observable;
 
 
@@ -10,7 +9,6 @@ import java.util.Observable;
  *
  */
 public class Matrix extends Observable{
-
 	/**
 	 * hashvalue for this instance
 	 */
@@ -25,7 +23,7 @@ public class Matrix extends Observable{
 	private double[][] content;
 
 	/**
-	 * class Matrix represents a n x n matrix, the matrix can not be smaller
+	 * class geometricCalculus.model.Matrix represents a n x n matrix, the matrix can not be smaller
 	 * then 2 in dimension
 	 * 
 	 * @param n
@@ -163,6 +161,21 @@ public class Matrix extends Observable{
 	}
 
 	/**
+	 * the method sets the desired matrix column to the given vector, if the vector and the matrix differ in their dimension,
+	 * a IllegalArgumentException is thrown, otherwise the old column content is replaced by the values of the vector
+	 * @param column the column, which should be replaced
+	 * @param v the vector, which replaces the column
+	 */
+	public void setColumn(int column,Vector v){
+		if(column < 0 || column >= this.length() || length() != v.length()){
+			throw new IllegalArgumentException();
+		}
+		for (int row = 0;row < this.content.length;row++){
+			this.content[row][column] = v.get(column);
+		}
+	}
+
+	/**
 	 * clones this matrix
 	 * @return a new matrix, which contains the same values as the original one
 	 */
@@ -180,7 +193,7 @@ public class Matrix extends Observable{
 	 * simple to string method
 	 */
 	public String toString() {
-		String s = n + " x " + n + " Matrix:\n";
+		String s = n + " x " + n + " geometricCalculus.model.Matrix:\n";
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
 				s += content[i][j] + "\t\t";

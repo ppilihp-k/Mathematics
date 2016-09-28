@@ -6,27 +6,52 @@ import differentialCalculus.pseudocontrol.*;
 public class DifferentialCalculator {
 
     /**
-     * computes a fast sinus, but exchanges precision for speed
-     * @param x the value
-     * @return a value, which is approximately sin(x)
+     * constant for computing the equivalent for a grad value in radiant
      */
-    public float fSin(float x){
-        return (float)(x - (Math.pow(x,3)*0.1667d) + (Math.pow(x,5)*0.008334d) - (Math.pow(x,7)*0.0001984127d));
+    public static final double GRADTORAD = Math.PI/180;
+    /**
+     * constant for computing the equivalent for a radiant value in a grad value
+     */
+    public static final double RADTOGRAD = 180/Math.PI;
+
+    public static final double PI = Math.PI;
+
+    public DifferentialCalculator(){
+
     }
 
     /**
+     * this method computes the sin value for grad-values, therefore calculates the equivalent in
+     * rad and then starts the computation.
+     * the computation runs through 5 iteration of the taylor-series:
      * sum from n = 0 to iteration of: (-1)^n * (x^2n+1)/(2n+1)!
      * @param x the value
-     * @param iterations the amount of iterations to compute sin(x)
-     * @return the result of sin(x) after "iterations" iterations
+     * @return the result of sin(x) in degrees
      */
-    public float sin(float x,int iterations){
-        float s = 0f;
-        for (int i = 0;i < iterations+1;i++){
-            int n = (2*i)+1;
-            s += ((Math.pow(-1,i))*(((Double)Math.pow(x,n))/fak(n)));
+    public float sin(float x){
+        x = x % 360;
+        if(x == 0 || x == 180){
+            return 0f;
         }
-        return s;
+        if(x == 90){
+            return 1;
+        }
+        if(x == 270){
+            return -1;
+        }
+        x = (toRad(x));
+        double s = x;
+        for (int i = 1;i < 10;i++){
+            int n = (2*i)+1;
+            double nominator = Math.pow(x,n);
+            double denominator = fac(n);
+            if(i % 2 == 0){
+                s += (nominator/denominator);
+            } else {
+                s -= (nominator/denominator);
+            }
+        }
+        return (float)s;
     }
 
     /**
@@ -35,7 +60,7 @@ public class DifferentialCalculator {
      * @return the equivalent in grad
      */
     public float toGrad(float x){
-        return (float)(x*57.29577951d);
+        return (float)(x*RADTOGRAD);
     }
 
     /**
@@ -44,29 +69,39 @@ public class DifferentialCalculator {
      * @return the equivalent in radiant
      */
     public float toRad(float x){
-        return (float)(x*0.01745329252d);
+        return (float)(x*GRADTORAD);
     }
 
     /**
-     * computes a fast cosinus, but exchanges precision for speed
-     * @param x the value
-     * @return a value, which is approximately cos(x)
-     */
-    public float fcos(float x){
-        return (float)(1 - (Math.pow(x,2)*0.5d) + (Math.pow(x,4)*0.041667d) - (Math.pow(x,6)*0.0013889d));
-    }
-
-    /**
+     * this method computes the cos value for grad-values, therefore calculates the equivalent in
+     * rad and then starts the computation.
+     * the computation runs through 5 iteration of the taylor-series:
      * sum from n = 0 to iteration of: (-1)^n * (x^2n)/2n!
      * @param x the value
-     * @param iterations the amount of iterations to compute cos(x)
-     * @return the result of cos(x) after "iterations" iterations
+     * @return the result of cos(x) in degrees
      */
-    public float cos(float x,int iterations){
-        float s = 0f;
-        for (int i = 0;i< iterations; i++){
+    public float cos(float x){
+        x = x % 360;
+        if(x == 0 || x == 270){
+            return 1;
+        }
+        if(x == 90){
+            return 0;
+        }
+        if(x == 180){
+            return -1;
+        }
+        x = toRad(x);
+        float s = 1;
+        for (int i = 1;i <= 10; i++){
             int n = 2*i;
-            s += ((Math.pow(-1,i))*(((Double)Math.pow(x,n))/fak(n)));
+            float nominator = (float)Math.pow(x,n);
+            float denominator = fac(n);
+            if(s % 2 == 0){
+                s += nominator/denominator;
+            } else {
+                s -= nominator/denominator;
+            }
         }
         return s;
     }
@@ -76,30 +111,99 @@ public class DifferentialCalculator {
      * @param n the value
      * @return the faculty of n
      */
-    public float fak(int n){
+    public int fac(int n){
         if(n == 0 || n == 1){
             return 1;
         }
-        return n * fak(n-1);
+        return n * fac(n-1);
     }
 
     /**
-     * computes a fast tangens, but exchanges precision for speed
-     * @param x the value
-     * @return a value, which is approximately tan(x)
-     */
-    public float ftan(float x,int iterations){
-        return fSin(x)/fcos(x);
-    }
-
-    /**
+     * this method computes the tangens for a grad value
      * computes sin(x)/cos(x)
      * @param x the value
-     * @param iterations the amount of iterations for sin and cos
      * @return tan(x)
      */
-    public float tan(float x,int iterations){
-        return sin(x,iterations)/cos(x,iterations);
+    public double tan(int x){
+        return sin(x)/cos(x);
+    }
+
+    /**
+     * computes the arccos in degrees, this method isn't much precise... there is a error of ~9°
+     * for precise computation use the arcsin of the java Math class
+     * this method is computed with:
+     * 90 - asin(x)
+     * @param x
+     * @return the arccos in degrees
+     */
+    public double acos(int x){
+        double asin = asin(x);
+        return (90 - asin);
+    }
+
+    /**
+     * computes the arcsin in degrees, this method isn't much precise... there is a error of ~9°
+     * for precise computation use the arcsin of the java Math class
+     * this method uses the binominal taylor-series:
+     * sum from k=0 to "infinity" of (2k over k) * (x^(2k+1))/(4^k * (2k+1))
+     * @param x
+     * @return the arcsin in degrees
+     */
+    public double asin(float x){
+        if(x < -1 || x > 1){
+            throw new IllegalArgumentException();
+        }
+        double sin = 0f;
+        for (int i = 0;i < 1000;i++){
+            int n = (2*i)+1;
+            int biNoCo = binominalCoefficient(2*i,i);
+            double nominator = Math.pow(x,n);
+            double denominator = (float)(Math.pow(4,i)*n);
+            sin += (biNoCo * (nominator/denominator));
+        }
+        System.out.println(sin);
+        return toGrad((float)sin);
+    }
+    public float atan(float x){
+        float atan = 0f;
+        for (int i = 0;i < 100;i++){
+            int n = (2*i)+1;
+            float nominator = (float)Math.pow(x,n);
+            if(i % 2 == 0){
+                atan += (nominator/n);
+            } else {
+                atan -= (nominator/n);
+            }
+        }
+        return toGrad(atan);
+    }
+
+    /**
+     * the method computes the binominal coefficient for n over k
+     * @param n
+     * @param k
+     * @return the amount of k sized subsets of a n sized set
+     */
+    public int binominalCoefficient(int n,int k){
+        if(n < 0)
+            throw new IllegalArgumentException();
+        if(n == 0 && k > 0){
+            throw new IllegalArgumentException();
+        }
+        if(n == k){
+            return 1;
+        }
+        if(k <= 0) {
+            return 1;
+        } else if(2*k > n){
+            return binominalCoefficient(n,n-k);
+        }
+        int res = n - k + 1;
+        for (int i = 2;i <= k;i++){
+            res = (res * (n - k + i));
+            res = (res / i);
+        }
+        return res;
     }
 
     /**

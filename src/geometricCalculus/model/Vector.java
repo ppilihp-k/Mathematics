@@ -1,3 +1,4 @@
+package geometricCalculus.model;
 
 import java.util.Observable;
 
@@ -79,8 +80,8 @@ public class Vector extends Observable{
 	}
 	
 	/**
-	 * clones this Vector
-	 * @return a new Vector, which contains the same values as this original one
+	 * clones this geometricCalculus.model.Vector
+	 * @return a new geometricCalculus.model.Vector, which contains the same values as this original one
 	 */
 	public Vector clone(){
 		Vector v = new Vector(n);
@@ -94,7 +95,7 @@ public class Vector extends Observable{
 	 * simple to string method
 	 */
 	public String toString(){
-		String s = "Vector:\n";
+		String s = "geometricCalculus.model.Vector:\n";
 		for (int i = 0; i < n; i++) {
 			s += content[i] + "\n";
 		}

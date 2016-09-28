@@ -1,12 +1,13 @@
-
-import java.util.List;
-
-import javax.swing.plaf.synth.SynthSpinnerUI;
+package geometricCalculus;
 
 
 import exceptions.InfiniteResultsException;
 import exceptions.InternalErrorException;
 import exceptions.NoResultException;
+import geometricCalculus.model.Matrix;
+import geometricCalculus.model.Plane;
+import geometricCalculus.model.Segment;
+import geometricCalculus.model.Vector;
 
 /**
  * 
@@ -18,7 +19,25 @@ public class GeometricCalculator {
 	public GeometricCalculator() {
 
 	}
-	
+
+	public boolean contains(Plane p,Vector v){
+		Vector planeNormal = crossprodukt(p.getDirectionalVectorOne(),p.getDirectionalVectorTwo());
+		float t = (float)scalarproduct(subtract(v,p.getOrigin()),planeNormal);
+		if(t == 0){
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * computes a normalvector for a given plane
+	 * @param p the plane
+	 * @return a vector, which is orthogonal to the plane
+	 */
+	public Vector getPlaneNormal(Plane p){
+		return this.crossprodukt(p.getDirectionalVectorOne(),p.getDirectionalVectorTwo());
+	}
+
 	/**
 	 * computes the determinat of a matrix, the computation is based on the
 	 * "Laplace Entwicklungssatz"
@@ -121,7 +140,7 @@ public class GeometricCalculator {
 	/**
 	 * scales all elements of the vector with the value s
 	 * 
-	 * @param m
+	 * @param v
 	 *            - the vector
 	 * @param s
 	 *            - the scalar
@@ -326,9 +345,29 @@ public class GeometricCalculator {
 		}
 		throw new InternalErrorException();
 	}
-	
-	public Vector intersect(Segment s, Plane p) {
-		return null;
+
+	public Vector intersect(Segment s, Plane p) throws NoResultException,InfiniteResultsException,InternalErrorException {
+		if (s.getOrigin().length() != p.getOrigin().length()){
+			throw new InternalErrorException();
+		}
+		Vector os = s.getOrigin();
+		Vector rs = s.getDirectionalVector();
+		Vector up = p.getDirectionalVectorOne();
+		Vector vp = p.getDirectionalVectorTwo();
+		Vector op = p.getOrigin();
+
+		/*set up the matrix -> up + vp - ws*/
+		Matrix m = new Matrix(3);
+		m.setColumn(0,up);
+		m.setColumn(1,vp);
+		scale(rs,-1);
+		m.setColumn(2,rs);
+		scale(rs,-1);
+
+		/*set up the resultvector for the equasion system -> os - op*/
+		Vector r = subtract(os,op);
+
+		return solve(m,r);
 	}
 
 	/**
@@ -479,7 +518,7 @@ public class GeometricCalculator {
 	 * @param v1 - the first vector
 	 * @param v2 - the second vector
 	 * @return the scalarprodukt of the two given vectors
-	 * @throws IllegalArguemntException, if the two vectors differ in dimension
+	 * @throws IllegalArgumentException, if the two vectors differ in dimension
 	 */
 	public double scalarproduct(Vector v1, Vector v2){
 		int n1 = v1.length();

@@ -1,3 +1,4 @@
+package statisticCalculus;
 
 public class StatisticCalculator {
 

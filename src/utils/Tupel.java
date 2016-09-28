@@ -1,3 +1,4 @@
+package utils;
 
 /**
  * represents a simple tupel
@@ -10,5 +11,12 @@ public class Tupel<T,E> {
 
 	public T first;
 	public E second;
-	
+
+	public Tupel(){};
+
+	public Tupel(T f,E s){
+		first = f;
+		second = s;
+	}
+
 }

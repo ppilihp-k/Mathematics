@@ -1,7 +1,10 @@
+package graph.model;
+
 import exceptions.InternalErrorException;
 
 import java.io.Serializable;
 import java.util.*;
+import utils.Tupel;
 
 /**
  * Created by PhilippKroll on 03.08.2016.
@@ -588,7 +591,7 @@ public class Graph extends Observable implements Serializable {
         } else {
             o += "Undirected ";
         }
-        o += "Graph=(";
+        o += "graph.model.Graph=(";
         if(nameMap.size() == 0){
             o += "V={0,...,"+nextFreeNode+"},\nE={";
         } else {
